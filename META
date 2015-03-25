@@ -1,0 +1,5 @@
+name="stb_truetype"
+version="0.01"
+description="OCaml bindings to stb_truetype, a public domain truetype font rasterizer"
+archive(byte)="stb_truetype.cma"
+archive(native)="stb_truetype.cmxa"
