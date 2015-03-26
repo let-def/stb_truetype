@@ -239,16 +239,7 @@ typedef struct {
   stbtt_packedchar chars[1];
 } ml_stbtt_packed_chars;
 
-static struct custom_operations packed_chars_custom_ops = {
-    identifier: "ml_stbtt_packed_chars",
-    finalize:    custom_finalize_default,
-    compare:     custom_compare_default,
-    hash:        custom_hash_default,
-    serialize:   custom_serialize_default,
-    deserialize: custom_deserialize_default
-};
-
-#define Packed_chars_val Data_custom_val
+#define Packed_chars_val(x) ((ml_stbtt_packed_chars *)String_val(x))
 CAMLprim value ml_stbtt_packed_chars_count(value packed_chars)
 {
   CAMLparam1(packed_chars);
@@ -351,17 +342,17 @@ static float font_range_font_size(value font_range)
     return STBTT_POINT_SIZE(Double_val(Field(sz, 0)));
 }
 
-static value packed_chars_alloc(stbtt_pack_range* range)
+static value packed_chars_alloc(int count, stbtt_pack_range* range)
 {
   CAMLparam0();
   CAMLlocal1(ret);
-  int count = range->num_chars_in_range;
   int size = sizeof(ml_stbtt_packed_chars) + sizeof(stbtt_packedchar) * (count - 1);
 
-  ret = caml_alloc_custom(&packed_chars_custom_ops, size, 0, 1);
+  ret = caml_alloc_string(size);
   ml_stbtt_packed_chars *data = Packed_chars_val(ret);
   data->count = count;
-  range->chardata_for_range = &data->chars[0];
+  if (range)
+    range->chardata_for_range = &data->chars[0];
 
   CAMLreturn(ret);
 }
@@ -384,7 +375,7 @@ CAMLprim value ml_stbtt_pack_font_ranges(value pack_context, value font_info, va
     ranges[i].num_chars_in_range = Int_val(Field(font_range, 2));
     ranges[i].chardata_for_range = NULL;
 
-    Store_field(packed_ranges, i, packed_chars_alloc(&ranges[i]));
+    Store_field(packed_ranges, i, packed_chars_alloc(ranges[i].num_chars_in_range, &ranges[i]));
   }
 
   int result = stbtt_PackFontInfoRanges(Pack_context_val(pack_context), Fontinfo_val(font_info), ranges, num_ranges);
@@ -395,6 +386,134 @@ CAMLprim value ml_stbtt_pack_font_ranges(value pack_context, value font_info, va
   {
     ret = caml_alloc(1, 0);
     Store_field(ret, 0, packed_ranges);
+  }
+
+  CAMLreturn(ret);
+}
+
+static void put_short(unsigned char **s, unsigned short x)
+{
+  (*s)[0] = x & 0xFF;
+  (*s)[1] = (x >> 8) & 0xFF;
+  (*s) += 2;
+}
+
+static unsigned short get_short(unsigned char **s)
+{
+  unsigned short x;
+  x = (*s)[0] | ((*s)[1] << 8);
+  (*s) += 2;
+  return x;
+}
+
+static void put_long(unsigned char **s, unsigned long x)
+{
+  (*s)[0] = x & 0xFF;
+  (*s)[1] = (x >> 8) & 0xFF;
+  (*s)[2] = (x >> 16) & 0xFF;
+  (*s)[3] = (x >> 24) & 0xFF;
+  (*s) += 4;
+}
+
+static unsigned long get_long(unsigned char **s)
+{
+  unsigned long x;
+  x = (*s)[0] | ((*s)[1] << 8) | ((*s)[2] << 16) | ((*s)[3] << 24);
+  (*s) += 4;
+  return x;
+}
+
+// Less portable but... not the first undefined behavior in this file, <3 C
+static void put_float(unsigned char **s, float f)
+{
+  union {
+    unsigned long x;
+    float f;
+  } u;
+  u.f = f;
+  put_long(s, u.x);
+}
+
+static float get_float(unsigned char **s)
+{
+  union {
+    unsigned long x;
+    float f;
+  } u;
+  u.x = get_long(s);
+  return u.f;
+}
+
+#define PACKED_CHARS_VERSION 1
+
+CAMLprim value ml_stbtt_string_of_packed_chars(value packed_chars)
+{
+  CAMLparam1(packed_chars);
+  CAMLlocal1(ret);
+
+  ml_stbtt_packed_chars *data = Packed_chars_val(ret);
+
+  /* Compute size of portable string */
+  /* version 1 byte,
+   * count   4 bytes,
+   * content count * (4 * 2 bytes (shorts) + 5 * 4 bytes (floats))
+   */
+  int size = 1 + 4 + 28 * data->count;
+  ret = caml_alloc_string(size);
+
+  unsigned char *s = (unsigned char *)String_val(ret);
+  *s = PACKED_CHARS_VERSION;
+  s++;
+  put_long(&s, data->count);
+
+  int i;
+  for (i = 0; i < data->count; ++i)
+  {
+    stbtt_packedchar *p = &data->chars[i];
+    put_short(&s, p->x0);
+    put_short(&s, p->y0);
+    put_short(&s, p->x1);
+    put_short(&s, p->y1);
+    put_float(&s, p->xoff);
+    put_float(&s, p->yoff);
+    put_float(&s, p->xadvance);
+    put_float(&s, p->xoff2);
+    put_float(&s, p->yoff2);
+  }
+
+  CAMLreturn(ret);
+}
+
+CAMLprim value ml_stbtt_packed_chars_of_string(value str)
+{
+  CAMLparam1(str);
+  CAMLlocal1(ret);
+
+  unsigned char *s = (unsigned char *)String_val(str);
+
+  if (*s != PACKED_CHARS_VERSION)
+    caml_invalid_argument("Stb_truetype.packed_chars_of_string");
+  else
+  {
+    s++;
+    unsigned long count = get_long(&s);
+    ret = packed_chars_alloc(count, NULL);
+    ml_stbtt_packed_chars *data = Packed_chars_val(ret);
+
+    int i;
+    for (i = 0; i < count; ++i)
+    {
+      stbtt_packedchar *p = &data->chars[i];
+      p->x0       = get_short(&s);
+      p->y0       = get_short(&s);
+      p->x1       = get_short(&s);
+      p->y1       = get_short(&s);
+      p->xoff     = get_float(&s);
+      p->yoff     = get_float(&s);
+      p->xadvance = get_float(&s);
+      p->xoff2    = get_float(&s);
+      p->yoff2    = get_float(&s);
+    }
   }
 
   CAMLreturn(ret);
