@@ -68,4 +68,4 @@ type char_quad = {
 }
 val packed_chars_quad : packed_chars -> int -> bitmap_width:int -> bitmap_height:int -> screen_x:float -> screen_y:float -> align_on_int:bool -> float * char_quad
 
-val pack_font_ranges : pack_context -> t -> font_range array -> bool * packed_chars array
+val pack_font_ranges : pack_context -> t -> font_range array -> packed_chars array option

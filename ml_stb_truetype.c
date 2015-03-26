@@ -30,25 +30,35 @@ static struct custom_operations fontinfo_custom_ops = {
     deserialize: custom_deserialize_default
 };
 
-#define Fontinfo_val Data_custom_val
+/* Layout of fontinfo and, later, pack_context:
+ * (custom, buffer)
+ * where custom is a custom block with library-specific data
+ *       buffer is a reference kept to underlying bigarray store
+ */
+
+#define Fontinfo_val(x) (Data_custom_val(Field((x), 0)))
 
 CAMLprim value ml_stbtt_InitFont(value ba, value voffset)
 {
   CAMLparam2(ba, voffset);
-  CAMLlocal2(ret, fontinfo);
+  CAMLlocal3(ret, pack, fontinfo);
 
   unsigned char *data = Caml_ba_data_val(ba);
   int index = Int_val(voffset);
 
   fontinfo = caml_alloc_custom(&fontinfo_custom_ops, sizeof(stbtt_fontinfo), 0, 1);
-  int result = stbtt_InitFont(Fontinfo_val(fontinfo), data, index);
+  int result = stbtt_InitFont(Data_custom_val(fontinfo), data, index);
 
   if (result == 0)
     ret = Val_unit;
   else
   {
+    pack = caml_alloc(2, 0);
+    Store_field(pack, 0, fontinfo);
+    Store_field(pack, 1, ba);
+
     ret = caml_alloc(1, 0);
-    Store_field(ret, 0, fontinfo);
+    Store_field(ret, 0, pack);
   }
 
   CAMLreturn(ret);
@@ -60,7 +70,16 @@ CAMLprim value ml_stbtt_FindGlyphIndex(value fontinfo, value codepoint)
   CAMLlocal1(ret);
 
   int index = stbtt_FindGlyphIndex(Fontinfo_val(fontinfo), Int_val(codepoint));
-  CAMLreturn(Val_int(index));
+
+  if (index == 0)
+    ret = Val_unit;
+  else
+  {
+    ret = caml_alloc(1, 0);
+    Store_field(ret, 0, Val_int(index));
+  }
+
+  CAMLreturn(ret);
 }
 
 CAMLprim value ml_stbtt_ScaleForPixelHeight(value fontinfo, value height)
@@ -163,12 +182,12 @@ CAMLprim value ml_stbtt_GetGlyphBox(value fontinfo, value glyph)
 }
 
 // Bitmap packer
-#define Pack_context_val Data_custom_val
+#define Pack_context_val(x) (Data_custom_val(Field((x), 0)))
 
 static void pack_context_finalize(value v)
 {
   CAMLparam1(v);
-  stbtt_PackEnd(Pack_context_val(v));
+  stbtt_PackEnd(Data_custom_val(v));
   CAMLreturn0;
 }
 
@@ -184,21 +203,25 @@ static struct custom_operations pack_context_custom_ops = {
 CAMLprim value ml_stbtt_PackBegin(value buffer, value w, value h, value s, value p)
 {
   CAMLparam5(buffer, w, h, s, p);
-  CAMLlocal2(ret, pack_context);
+  CAMLlocal3(ret, pack, pack_context);
 
   unsigned char *data = Caml_ba_data_val(buffer);
   int width = Int_val(w), height = Int_val(h), stride = Int_val(s),
       padding = Int_val(p);
 
   pack_context = caml_alloc_custom(&pack_context_custom_ops, sizeof(stbtt_pack_context), 0, 1);
-  int result = stbtt_PackBegin(Pack_context_val(pack_context), data, width, height, stride, padding, NULL);
+  int result = stbtt_PackBegin(Data_custom_val(pack_context), data, width, height, stride, padding, NULL);
 
   if (result == 0)
     ret = Val_unit;
   else
   {
+    pack = caml_alloc(2, 0);
+    Store_field(pack, 0, pack_context);
+    Store_field(pack, 1, buffer);
+
     ret = caml_alloc(1, 0);
-    Store_field(ret, 0, pack_context);
+    Store_field(ret, 0, pack);
   }
 
   CAMLreturn(ret);
@@ -225,10 +248,11 @@ static struct custom_operations packed_chars_custom_ops = {
     deserialize: custom_deserialize_default
 };
 
+#define Packed_chars_val Data_custom_val
 CAMLprim value ml_stbtt_packed_chars_count(value packed_chars)
 {
   CAMLparam1(packed_chars);
-  ml_stbtt_packed_chars *data = Data_custom_val(packed_chars);
+  ml_stbtt_packed_chars *data = Packed_chars_val(packed_chars);
   CAMLreturn(Val_int(data->count));
 }
 
@@ -237,7 +261,7 @@ CAMLprim value ml_stbtt_packed_chars_box(value packed_chars, value index)
   CAMLparam2(packed_chars, index);
   CAMLlocal1(ret);
 
-  ml_stbtt_packed_chars *data = Data_custom_val(packed_chars);
+  ml_stbtt_packed_chars *data = Packed_chars_val(packed_chars);
   unsigned int idx = Int_val(index);
 
   if (idx >= data->count)
@@ -256,7 +280,7 @@ CAMLprim value ml_stbtt_packed_chars_metrics(value packed_chars, value index)
   CAMLparam2(packed_chars, index);
   CAMLlocal1(ret);
 
-  ml_stbtt_packed_chars *data = Data_custom_val(packed_chars);
+  ml_stbtt_packed_chars *data = Packed_chars_val(packed_chars);
   unsigned int idx = Int_val(index);
 
   if (idx >= data->count)
@@ -282,7 +306,7 @@ CAMLprim value ml_stbtt_packed_chars_quad(value packed_chars, value index, value
   CAMLxparam1(sy);
   CAMLlocal3(sx2, quad, ret);
 
-  ml_stbtt_packed_chars *data = Data_custom_val(packed_chars);
+  ml_stbtt_packed_chars *data = Packed_chars_val(packed_chars);
   stbtt_aligned_quad q;
   unsigned int idx = Int_val(index);
 
@@ -335,7 +359,7 @@ static value packed_chars_alloc(stbtt_pack_range* range)
   int size = sizeof(ml_stbtt_packed_chars) + sizeof(stbtt_packedchar) * (count - 1);
 
   ret = caml_alloc_custom(&packed_chars_custom_ops, size, 0, 1);
-  ml_stbtt_packed_chars *data = Data_custom_val(ret);
+  ml_stbtt_packed_chars *data = Packed_chars_val(ret);
   data->count = count;
   range->chardata_for_range = &data->chars[0];
 
@@ -365,9 +389,13 @@ CAMLprim value ml_stbtt_pack_font_ranges(value pack_context, value font_info, va
 
   int result = stbtt_PackFontInfoRanges(Pack_context_val(pack_context), Fontinfo_val(font_info), ranges, num_ranges);
 
-  ret = caml_alloc(2, 0);
-  Store_field(ret, 0, Val_int(result != 0));
-  Store_field(ret, 1, packed_ranges);
+  if (result == 0)
+    ret = Val_unit;
+  else
+  {
+    ret = caml_alloc(1, 0);
+    Store_field(ret, 0, packed_ranges);
+  }
 
   CAMLreturn(ret);
 }
