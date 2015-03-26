@@ -1,3 +1,18 @@
+(*
+  Stb_truetype for OCaml by Frédéric Bour <frederic.bour(_)lakaban.net>
+  To the extent possible under law, the person who associated CC0 with
+  Stb_truetype for OCaml has waived all copyright and related or neighboring
+  rights to Stb_truetype for OCaml.
+
+  You should have received a copy of the CC0 legalcode along with this
+  work. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
+
+  Website: https://github.com/def-lkb/stb_truetype
+  stb_truetype is a public domain library by Sean Barrett,
+  http://nothings.org/
+
+  Version 0.1, Mars 2015
+*)
 open Bigarray
 
 type buffer = (int, int8_unsigned_elt, c_layout) Array1.t
@@ -78,3 +93,6 @@ type char_quad = {
 external packed_chars_quad : packed_chars -> int -> bitmap_width:int -> bitmap_height:int -> screen_x:float -> screen_y:float -> align_on_int:bool -> float * char_quad = "ml_stbtt_packed_chars_quad_bc" "ml_stbtt_packed_chars_quad"
 
 external pack_font_ranges : pack_context -> t -> font_range array -> packed_chars array option = "ml_stbtt_pack_font_ranges"
+
+external packed_chars_of_string : string -> packed_chars = "ml_stbtt_packed_chars_of_string"
+external string_of_packed_chars : packed_chars -> string = "ml_stbtt_string_of_packed_chars"
