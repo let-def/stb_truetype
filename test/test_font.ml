@@ -16,7 +16,7 @@ let save_buffer filename arr =
   Unix.close fd
 
 let box_to_string {Stb_truetype. x0; y0; x1; y1} scale =
-  Printf.sprintf "(%d,%d)-(%d,%d) unscaled, or (%.2f,%.2f)-(%.2f,%.2f) scaled"
+  Printf.sprintf "((%d,%d),(%d,%d)) unscaled, or ((%.2f,%.2f),(%.2f,%.2f)) scaled"
     x0 y0 x1 y1
     (float_of_int x0 *.scale)
     (float_of_int y0 *.scale)
@@ -71,9 +71,9 @@ let main filename =
                      first_codepoint = Char.code 'A';
                      count = Char.code 'z' - Char.code 'A' + 1}|] in
       let pack () =
-        let success, _result =
-          Stb_truetype.pack_font_ranges packer font range in
-        assert success
+        match Stb_truetype.pack_font_ranges packer font range with
+        | Some _atlas -> ()
+        | None -> Printf.eprintf "Not enough room for packing\n"
       in
       Printf.eprintf "Packing A-z at low quality (os = 1)\n";
       Stb_truetype.pack_set_oversampling packer ~h:1 ~v:1;
