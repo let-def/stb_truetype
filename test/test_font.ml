@@ -99,3 +99,5 @@ let main filename =
 let () =
   if Array.length Sys.argv > 1 then
     main Sys.argv.(1)
+  else
+    Printf.eprintf "Usage: %s <path-to-font.ttf>\n" Sys.argv.(0)
