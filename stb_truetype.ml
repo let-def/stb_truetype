@@ -65,7 +65,7 @@ type pack_context
 external pack_begin : buffer -> width:int -> height:int -> stride:int -> padding:int -> pack_context option = "ml_stbtt_PackBegin"
 external pack_set_oversampling : pack_context -> h:int -> v:int -> unit = "ml_stbtt_PackSetOversampling"
 
-type font_range = {
+type char_range = {
   font_size: font_size;
   first_codepoint: int;
   count: int;
@@ -92,7 +92,7 @@ type char_quad = {
 }
 external packed_chars_quad : packed_chars -> int -> bitmap_width:int -> bitmap_height:int -> screen_x:float -> screen_y:float -> align_on_int:bool -> float * char_quad = "ml_stbtt_packed_chars_quad_bc" "ml_stbtt_packed_chars_quad"
 
-external pack_font_ranges : pack_context -> t -> font_range array -> packed_chars array option = "ml_stbtt_pack_font_ranges"
+external pack_font_ranges : pack_context -> t -> char_range array -> packed_chars array option = "ml_stbtt_pack_font_ranges"
 
 external packed_chars_of_string : string -> packed_chars = "ml_stbtt_packed_chars_of_string"
 external string_of_packed_chars : packed_chars -> string = "ml_stbtt_string_of_packed_chars"
