@@ -23,7 +23,7 @@ stb_truetype.cmx: stb_truetype.ml stb_truetype.cmi
 stb_truetype.cmxa stb_truetype.a: stb_truetype.cmx dll_stb_truetype_stubs.so
 	ocamlopt -a -o $@ $< -cclib -l_stb_truetype_stubs -ccopt "$(CFLAGS)"
 
-.PHONY: clean-doc clean clean-mlpp run-opt-demo test install
+.PHONY: clean install reinstall uninstall
 
 clean: clean-doc clean-mlpp
 	rm -f *.[oa] *.so *.cm[ixoa] *.cmxa
