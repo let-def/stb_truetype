@@ -25,7 +25,7 @@ stb_truetype.cmxa stb_truetype.a: stb_truetype.cmx dll_stb_truetype_stubs.so
 
 .PHONY: clean install reinstall uninstall
 
-clean: clean-doc clean-mlpp
+clean:
 	rm -f *.[oa] *.so *.cm[ixoa] *.cmxa
 
 DIST_FILES=              \
@@ -35,6 +35,8 @@ DIST_FILES=              \
 	stb_truetype.cma          \
 	stb_truetype.cmx          \
 	stb_truetype.cmxa         \
+	stb_truetype.ml           \
+	stb_truetype.mli          \
 	lib_stb_truetype_stubs.a  \
 	dll_stb_truetype_stubs.so
 
