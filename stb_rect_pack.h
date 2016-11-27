@@ -418,7 +418,7 @@ static stbrp__findresult stbrp__skyline_find_best_pos(stbrp_context *c, int widt
             }
          }
          tail = tail->next;
-      }         
+      }
    }
 
    fr.prev_link = best;
@@ -518,17 +518,6 @@ static int rect_height_compare(const void *a, const void *b)
    if (p->h < q->h)
       return  1;
    return (p->w > q->w) ? -1 : (p->w < q->w);
-}
-
-static int rect_width_compare(const void *a, const void *b)
-{
-   const stbrp_rect *p = (const stbrp_rect *) a;
-   const stbrp_rect *q = (const stbrp_rect *) b;
-   if (p->w > q->w)
-      return -1;
-   if (p->w < q->w)
-      return  1;
-   return (p->h > q->h) ? -1 : (p->h < q->h);
 }
 
 static int rect_original_order(const void *a, const void *b)
