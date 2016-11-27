@@ -22,12 +22,12 @@ CAMLprim value ml_stbtt_GetFontOffsetForIndex(value ba, value vindex)
 }
 
 static struct custom_operations fontinfo_custom_ops = {
-    identifier: "stbtt_fontinfo",
-    finalize:    custom_finalize_default,
-    compare:     custom_compare_default,
-    hash:        custom_hash_default,
-    serialize:   custom_serialize_default,
-    deserialize: custom_deserialize_default
+  .identifier  = "stbtt_fontinfo",
+  .finalize    = custom_finalize_default,
+  .compare     = custom_compare_default,
+  .hash        = custom_hash_default,
+  .serialize   = custom_serialize_default,
+  .deserialize = custom_deserialize_default
 };
 
 /* Layout of fontinfo and, later, pack_context:
@@ -192,12 +192,12 @@ static void pack_context_finalize(value v)
 }
 
 static struct custom_operations pack_context_custom_ops = {
-    identifier: "stbtt_pack_context",
-    finalize:    pack_context_finalize,
-    compare:     custom_compare_default,
-    hash:        custom_hash_default,
-    serialize:   custom_serialize_default,
-    deserialize: custom_deserialize_default
+  .identifier  = "stbtt_pack_context",
+  .finalize    = pack_context_finalize,
+  .compare     = custom_compare_default,
+  .hash        = custom_hash_default,
+  .serialize   = custom_serialize_default,
+  .deserialize = custom_deserialize_default
 };
 
 CAMLprim value ml_stbtt_PackBegin(value buffer, value w, value h, value s, value p)
@@ -357,9 +357,9 @@ static value packed_chars_alloc(int count, stbtt_pack_range* range)
   CAMLreturn(ret);
 }
 
-CAMLprim value ml_stbtt_pack_font_ranges(value pack_context, value font_info, value font_ranges)
+CAMLprim value ml_stbtt_pack_font_ranges(value pack_context, value font_info, value font_index, value font_ranges)
 {
-  CAMLparam3(pack_context, font_info, font_ranges);
+  CAMLparam4(pack_context, font_info, font_index, font_ranges);
   CAMLlocal3(font_range, packed_ranges, ret);
 
   int num_ranges = Wosize_val(font_ranges), i;
@@ -371,14 +371,14 @@ CAMLprim value ml_stbtt_pack_font_ranges(value pack_context, value font_info, va
     font_range = Field(font_ranges, i);
     // Validate font_range input?
     ranges[i].font_size = font_range_font_size(font_range);
-    ranges[i].first_unicode_char_in_range = Int_val(Field(font_range, 1));
-    ranges[i].num_chars_in_range = Int_val(Field(font_range, 2));
+    ranges[i].first_unicode_codepoint_in_range = Int_val(Field(font_range, 1));
+    ranges[i].num_chars = Int_val(Field(font_range, 2));
     ranges[i].chardata_for_range = NULL;
 
-    Store_field(packed_ranges, i, packed_chars_alloc(ranges[i].num_chars_in_range, &ranges[i]));
+    Store_field(packed_ranges, i, packed_chars_alloc(ranges[i].num_chars, &ranges[i]));
   }
 
-  int result = stbtt_PackFontInfoRanges(Pack_context_val(pack_context), Fontinfo_val(font_info), ranges, num_ranges);
+  int result = stbtt_PackFontRanges(Pack_context_val(pack_context), Fontinfo_val(font_info), Int_val(font_index), ranges, num_ranges);
 
   if (result == 0)
     ret = Val_unit;

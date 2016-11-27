@@ -1,4 +1,4 @@
-// stb_rect_pack.h - v0.05 - public domain - rectangle packing
+// stb_rect_pack.h - v0.10 - public domain - rectangle packing
 // Sean Barrett 2014
 //
 // Useful for e.g. packing rectangular textures into an atlas.
@@ -13,6 +13,7 @@
 // More docs to come.
 //
 // No memory allocations; uses qsort() and assert() from stdlib.
+// Can override those by defining STBRP_SORT and STBRP_ASSERT.
 //
 // This library currently uses the Skyline Bottom-Left algorithm.
 //
@@ -20,11 +21,31 @@
 // implement them to the same API, but with a different init
 // function.
 //
+// Credits
+//
+//  Library
+//    Sean Barrett
+//  Minor features
+//    Martins Mozeiko
+//  Bugfixes / warning fixes
+//    Jeremy Jaussaud
+//
 // Version history:
 //
+//     0.10  (2016-10-25)  remove cast-away-const to avoid warnings
+//     0.09  (2016-08-27)  fix compiler warnings
+//     0.08  (2015-09-13)  really fix bug with empty rects (w=0 or h=0)
+//     0.07  (2015-09-13)  fix bug with empty rects (w=0 or h=0)
+//     0.06  (2015-04-15)  added STBRP_SORT to allow replacing qsort
 //     0.05:  added STBRP_ASSERT to allow replacing assert
 //     0.04:  fixed minor bug in STBRP_LARGE_RECTS support
 //     0.01:  initial release
+//
+// LICENSE
+//
+//   This software is dual-licensed to the public domain and under the following
+//   license: you are granted a perpetual, irrevocable license to copy, modify,
+//   publish, and distribute this file as you see fit.
 
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -129,7 +150,7 @@ enum
 {
    STBRP_HEURISTIC_Skyline_default=0,
    STBRP_HEURISTIC_Skyline_BL_sortHeight = STBRP_HEURISTIC_Skyline_default,
-   STBRP_HEURISTIC_Skyline_BF_sortHeight,
+   STBRP_HEURISTIC_Skyline_BF_sortHeight
 };
 
 
@@ -169,16 +190,25 @@ struct stbrp_context
 //
 
 #ifdef STB_RECT_PACK_IMPLEMENTATION
+#ifndef STBRP_SORT
 #include <stdlib.h>
+#define STBRP_SORT qsort
+#endif
 
 #ifndef STBRP_ASSERT
 #include <assert.h>
 #define STBRP_ASSERT assert
 #endif
 
+#ifdef _MSC_VER
+#define STBRP__NOTUSED(v)  (void)(v)
+#else
+#define STBRP__NOTUSED(v)  (void)sizeof(v)
+#endif
+
 enum
 {
-   STBRP__INIT_skyline = 1,
+   STBRP__INIT_skyline = 1
 };
 
 STBRP_DEF void stbrp_setup_heuristic(stbrp_context *context, int heuristic)
@@ -251,6 +281,9 @@ static int stbrp__skyline_find_min_y(stbrp_context *c, stbrp_node *first, int x0
    stbrp_node *node = first;
    int x1 = x0 + width;
    int min_y, visited_width, waste_area;
+
+   STBRP__NOTUSED(c);
+
    STBRP_ASSERT(first->x <= x0);
 
    #if 0
@@ -385,7 +418,7 @@ static stbrp__findresult stbrp__skyline_find_best_pos(stbrp_context *c, int widt
             }
          }
          tail = tail->next;
-      }
+      }         
    }
 
    fr.prev_link = best;
@@ -478,8 +511,8 @@ static stbrp__findresult stbrp__skyline_pack_rectangle(stbrp_context *context, i
 
 static int rect_height_compare(const void *a, const void *b)
 {
-   stbrp_rect *p = (stbrp_rect *) a;
-   stbrp_rect *q = (stbrp_rect *) b;
+   const stbrp_rect *p = (const stbrp_rect *) a;
+   const stbrp_rect *q = (const stbrp_rect *) b;
    if (p->h > q->h)
       return -1;
    if (p->h < q->h)
@@ -487,21 +520,21 @@ static int rect_height_compare(const void *a, const void *b)
    return (p->w > q->w) ? -1 : (p->w < q->w);
 }
 
-/*static int rect_width_compare(const void *a, const void *b)
+static int rect_width_compare(const void *a, const void *b)
 {
-   stbrp_rect *p = (stbrp_rect *) a;
-   stbrp_rect *q = (stbrp_rect *) b;
+   const stbrp_rect *p = (const stbrp_rect *) a;
+   const stbrp_rect *q = (const stbrp_rect *) b;
    if (p->w > q->w)
       return -1;
    if (p->w < q->w)
       return  1;
    return (p->h > q->h) ? -1 : (p->h < q->h);
-}*/
+}
 
 static int rect_original_order(const void *a, const void *b)
 {
-   stbrp_rect *p = (stbrp_rect *) a;
-   stbrp_rect *q = (stbrp_rect *) b;
+   const stbrp_rect *p = (const stbrp_rect *) a;
+   const stbrp_rect *q = (const stbrp_rect *) b;
    return (p->was_packed < q->was_packed) ? -1 : (p->was_packed > q->was_packed);
 }
 
@@ -524,20 +557,24 @@ STBRP_DEF void stbrp_pack_rects(stbrp_context *context, stbrp_rect *rects, int n
    }
 
    // sort according to heuristic
-   qsort(rects, num_rects, sizeof(rects[0]), rect_height_compare);
+   STBRP_SORT(rects, num_rects, sizeof(rects[0]), rect_height_compare);
 
    for (i=0; i < num_rects; ++i) {
-      stbrp__findresult fr = stbrp__skyline_pack_rectangle(context, rects[i].w, rects[i].h);
-      if (fr.prev_link) {
-         rects[i].x = (stbrp_coord) fr.x;
-         rects[i].y = (stbrp_coord) fr.y;
+      if (rects[i].w == 0 || rects[i].h == 0) {
+         rects[i].x = rects[i].y = 0;  // empty rect needs no space
       } else {
-         rects[i].x = rects[i].y = STBRP__MAXVAL;
+         stbrp__findresult fr = stbrp__skyline_pack_rectangle(context, rects[i].w, rects[i].h);
+         if (fr.prev_link) {
+            rects[i].x = (stbrp_coord) fr.x;
+            rects[i].y = (stbrp_coord) fr.y;
+         } else {
+            rects[i].x = rects[i].y = STBRP__MAXVAL;
+         }
       }
    }
 
    // unsort
-   qsort(rects, num_rects, sizeof(rects[0]), rect_original_order);
+   STBRP_SORT(rects, num_rects, sizeof(rects[0]), rect_original_order);
 
    // set was_packed flags
    for (i=0; i < num_rects; ++i)

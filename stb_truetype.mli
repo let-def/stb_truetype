@@ -143,13 +143,13 @@ type char_range = {
 type packed_chars
 
 (** Run the packer on some ranges of characters:
-    [pack_font_ranges context font ranges] will return:
+    [pack_font_ranges context font ?font_index ranges] will return:
     - [None] if there wasn't enough room to pack ranges on the bitmap
     - [Some arr] if everything went well; the bitmap will have been updated
       with the characters, and [arr] will contain a [packed_chars] for each
       input [char_range]
 *)
-val pack_font_ranges: pack_context -> t -> char_range array -> packed_chars array option
+val pack_font_ranges: pack_context -> t -> ?font_index:int -> char_range array -> packed_chars array option
 
 (*#####################*)
 (** {2 Packed characters} *)
