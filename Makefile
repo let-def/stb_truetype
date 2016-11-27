@@ -2,10 +2,9 @@ OCAMLC=ocamlc
 OCAMLOPT=ocamlopt
 OCAMLMKLIB=ocamlmklib
 
-EXT_CONFIG=$(shell $(OCAMLC) -config | grep '^ext_')
-EXT_DLL=$(shell printf "%s" "$(EXT_CONFIG)" | grep ext_dll | cut -f 2 -d ' ')
-EXT_LIB=$(shell printf "%s" "$(EXT_CONFIG)" | grep ext_lib | cut -f 2 -d ' ')
-EXT_OBJ=$(shell printf "%s" "$(EXT_CONFIG)" | grep ext_obj | cut -f 2 -d ' ')
+EXT_DLL=$(shell $(OCAMLC) -config | grep ext_dll | cut -f 2 -d ' ')
+EXT_LIB=$(shell $(OCAMLC) -config | grep ext_lib | cut -f 2 -d ' ')
+EXT_OBJ=$(shell $(OCAMLC) -config | grep ext_obj | cut -f 2 -d ' ')
 
 CFLAGS=-O3 -ffast-math
 
