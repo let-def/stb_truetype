@@ -7,7 +7,7 @@
   You should have received a copy of the CC0 legalcode along with this
   work. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 
-  Website: https://github.com/def-lkb/stb_truetype
+  Website: https://github.com/let-def/stb_truetype
   stb_truetype is a public domain library by Sean Barrett,
   http://nothings.org/
 
