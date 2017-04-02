@@ -21,11 +21,37 @@ CAMLprim value ml_stbtt_GetFontOffsetForIndex(value ba, value vindex)
   CAMLreturn(Val_int(result));
 }
 
+typedef struct {
+  intnat id;
+  stbtt_fontinfo fontinfo;
+} ml_fontinfo;
+
+#define ml_fontinfo_id(v) (((ml_fontinfo*)Data_custom_val(v))->id)
+#define ml_fontinfo_data(v) (((ml_fontinfo*)Data_custom_val(v))->fontinfo)
+
+static int ml_fontinfo_compare(value v1, value v2)
+{
+  intnat i1 = ml_fontinfo_id(v1);
+  intnat i2 = ml_fontinfo_id(v2);
+
+  if (i1 < i2)
+    return -1;
+  else if (i1 > i2)
+    return 1;
+  else
+    return 0;
+}
+
+static intnat ml_fontinfo_hash(value v)
+{
+  return ml_fontinfo_id(v);
+}
+
 static struct custom_operations fontinfo_custom_ops = {
   .identifier  = "stbtt_fontinfo",
   .finalize    = custom_finalize_default,
-  .compare     = custom_compare_default,
-  .hash        = custom_hash_default,
+  .compare     = ml_fontinfo_compare,
+  .hash        = ml_fontinfo_hash,
   .serialize   = custom_serialize_default,
   .deserialize = custom_deserialize_default
 };
@@ -36,7 +62,7 @@ static struct custom_operations fontinfo_custom_ops = {
  *       buffer is a reference kept to underlying bigarray store
  */
 
-#define Fontinfo_val(x) (Data_custom_val(Field((x), 0)))
+#define Fontinfo_val(x) (&ml_fontinfo_data(Field((x), 0)))
 
 CAMLprim value ml_stbtt_InitFont(value ba, value voffset)
 {
@@ -46,8 +72,10 @@ CAMLprim value ml_stbtt_InitFont(value ba, value voffset)
   unsigned char *data = Caml_ba_data_val(ba);
   int index = Int_val(voffset);
 
-  fontinfo = caml_alloc_custom(&fontinfo_custom_ops, sizeof(stbtt_fontinfo), 0, 1);
-  int result = stbtt_InitFont(Data_custom_val(fontinfo), data, index);
+  fontinfo = caml_alloc_custom(&fontinfo_custom_ops, sizeof(ml_fontinfo), 0, 1);
+  static intnat ids = 0;
+  ml_fontinfo_id(fontinfo) = ids++;
+  int result = stbtt_InitFont(&ml_fontinfo_data(fontinfo), data, index);
 
   if (result == 0)
     ret = Val_unit;

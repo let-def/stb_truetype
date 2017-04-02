@@ -35,7 +35,9 @@ type offset = private int
 (** [enum buffer] list all fonts found in [buffer] *)
 val enum: buffer -> offset list
 
-(** A font *)
+(** A font.
+    It is an custom type that cannot be serialized, but it is well-behaved for
+    hashing and comparison. *)
 type t
 
 (** [init buffer offset] try to open the font in [buffer] at the specified
