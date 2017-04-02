@@ -92,9 +92,7 @@ type char_quad = {
 }
 external packed_chars_quad : packed_chars -> int -> bitmap_width:int -> bitmap_height:int -> screen_x:float -> screen_y:float -> align_on_int:bool -> float * char_quad = "ml_stbtt_packed_chars_quad_bc" "ml_stbtt_packed_chars_quad"
 
-external pack_font_ranges : pack_context -> t -> font_index:int -> char_range array -> packed_chars array option = "ml_stbtt_pack_font_ranges"
-let pack_font_ranges pack_context  t ?(font_index=0) ranges =
-  pack_font_ranges pack_context t font_index ranges
+external pack_font_ranges : pack_context -> t -> char_range array -> packed_chars array option = "ml_stbtt_pack_font_ranges"
 
 external packed_chars_of_string : string -> packed_chars = "ml_stbtt_packed_chars_of_string"
 external string_of_packed_chars : packed_chars -> string = "ml_stbtt_string_of_packed_chars"

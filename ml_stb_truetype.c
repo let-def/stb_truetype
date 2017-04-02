@@ -385,6 +385,39 @@ static value packed_chars_alloc(int count, stbtt_pack_range* range)
   CAMLreturn(ret);
 }
 
+static int ml_stbtt_PackFontRanges(stbtt_pack_context *spc,
+    stbtt_fontinfo *info, stbtt_pack_range *ranges, int num_ranges)
+{
+   int i,j,n, return_value = 1;
+   //stbrp_context *context = (stbrp_context *) spc->pack_info;
+   stbrp_rect    *rects;
+
+   // flag all characters as NOT packed
+   for (i=0; i < num_ranges; ++i)
+      for (j=0; j < ranges[i].num_chars; ++j)
+         ranges[i].chardata_for_range[j].x0 =
+         ranges[i].chardata_for_range[j].y0 =
+         ranges[i].chardata_for_range[j].x1 =
+         ranges[i].chardata_for_range[j].y1 = 0;
+
+   n = 0;
+   for (i=0; i < num_ranges; ++i)
+      n += ranges[i].num_chars;
+
+   rects = (stbrp_rect *) STBTT_malloc(sizeof(*rects) * n, spc->user_allocator_context);
+   if (rects == NULL)
+      return 0;
+
+   n = stbtt_PackFontRangesGatherRects(spc, info, ranges, num_ranges, rects);
+
+   stbtt_PackFontRangesPackRects(spc, rects, n);
+
+   return_value = stbtt_PackFontRangesRenderIntoRects(spc, info, ranges, num_ranges, rects);
+
+   STBTT_free(rects, spc->user_allocator_context);
+   return return_value;
+}
+
 CAMLprim value ml_stbtt_pack_font_ranges(value pack_context, value font_info, value font_index, value font_ranges)
 {
   CAMLparam4(pack_context, font_info, font_index, font_ranges);
@@ -406,7 +439,7 @@ CAMLprim value ml_stbtt_pack_font_ranges(value pack_context, value font_info, va
     Store_field(packed_ranges, i, packed_chars_alloc(ranges[i].num_chars, &ranges[i]));
   }
 
-  int result = stbtt_PackFontRanges(Pack_context_val(pack_context), Fontinfo_val(font_info), Int_val(font_index), ranges, num_ranges);
+  int result = ml_stbtt_PackFontRanges(Pack_context_val(pack_context), Fontinfo_val(font_info), ranges, num_ranges);
 
   if (result == 0)
     ret = Val_unit;
