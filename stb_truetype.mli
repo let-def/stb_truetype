@@ -210,3 +210,8 @@ val string_of_packed_chars: packed_chars -> string
 
 (** Inverse to [string_of_packed_chars]. *)
 val packed_chars_of_string: string -> packed_chars
+
+val make_glyph_bitmap: t -> buffer -> width:int -> height:int ->
+  scale_x:float -> scale_y:float -> box -> glyph -> unit
+
+val get_glyph_bitmap_box: t -> glyph -> scale_x:float -> scale_y:float -> box

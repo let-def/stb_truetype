@@ -96,3 +96,26 @@ external pack_font_ranges : pack_context -> t -> char_range array -> packed_char
 
 external packed_chars_of_string : string -> packed_chars = "ml_stbtt_packed_chars_of_string"
 external string_of_packed_chars : packed_chars -> string = "ml_stbtt_string_of_packed_chars"
+
+
+external make_glyph_bitmap: t -> buffer -> offset:int -> gw:int -> gh:int -> stride:int -> scale_x:float -> scale_y:float -> glyph -> unit
+  = "ml_stbtt_MakeGlyphBitmap_bc" "ml_stbtt_MakeGlyphBitmap"
+
+let make_glyph_bitmap t buffer ~width ~height ~scale_x ~scale_y box glyph =
+  let dim = Bigarray.Array1.dim buffer in
+  if width * height > dim then
+    invalid_arg "Stb_truetype.make_glyph_bitmap: \
+                 width * height bigger than buffer";
+  if box.x0 > box.x1 || box.y0 > box.y1 then
+    invalid_arg "Stb_truetype.make_glyph_bitmap: malformed box";
+  if box.x0 < 0 || box.y0 < 0 || box.x1 > width || box.y1 > height then
+    invalid_arg "Stb_truetype.make_glyph_bitmap: box outside of buffer";
+  make_glyph_bitmap t buffer
+    ~stride:width
+    ~offset:(box.y0 * width + box.x0)
+    ~gw:(box.x1-box.x0)
+    ~gh:(box.y1-box.y0)
+    ~scale_x ~scale_y glyph
+
+external get_glyph_bitmap_box: t -> glyph -> scale_x:float -> scale_y:float -> box
+  = "ml_stbtt_GetGlyphBitmapBox"

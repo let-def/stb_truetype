@@ -579,3 +579,29 @@ CAMLprim value ml_stbtt_packed_chars_of_string(value str)
 
   CAMLreturn(ret);
 }
+
+CAMLprim value ml_stbtt_MakeGlyphBitmap(value fontinfo, value buffer, value offset, value gw, value gh, value stride, value scale_x, value scale_y, value glyph)
+{
+  stbtt_MakeGlyphBitmap(
+        Fontinfo_val(fontinfo),
+        Caml_ba_data_val(buffer) + Long_val(offset),
+        Long_val(gw), Long_val(gh),
+        Long_val(stride),
+        Double_val(scale_x), Double_val(scale_y),
+        Long_val(glyph)
+      );
+  return Val_unit;
+}
+
+CAMLprim value ml_stbtt_MakeGlyphBitmap_bc(value *argv, int argn)
+{
+  if (argn != 9) abort();
+  return ml_stbtt_MakeGlyphBitmap(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5], argv[6], argv[7], argv[8]);
+}
+
+CAMLprim value ml_stbtt_GetGlyphBitmapBox(value fontinfo, value glyph, value scale_x, value scale_y)
+{
+  int x0, y0, x1, y1;
+  stbtt_GetGlyphBitmapBox(Fontinfo_val(fontinfo), Long_val(glyph), Double_val(scale_x), Double_val(scale_y), &x0, &y0, &x1, &y1);
+  return box(x0, y0, x1, y1);
+}
