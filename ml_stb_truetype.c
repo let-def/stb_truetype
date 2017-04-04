@@ -18,7 +18,7 @@ CAMLprim value ml_stbtt_GetFontOffsetForIndex(value ba, value vindex)
   unsigned char *data = Caml_ba_data_val(ba);
   int index = Int_val(vindex);
   int result = stbtt_GetFontOffsetForIndex(data, index);
-  CAMLreturn(Val_int(result));
+  CAMLreturn(Val_long(result));
 }
 
 typedef struct {
@@ -104,7 +104,7 @@ CAMLprim value ml_stbtt_FindGlyphIndex(value fontinfo, value codepoint)
   else
   {
     ret = caml_alloc(1, 0);
-    Store_field(ret, 0, Val_int(index));
+    Store_field(ret, 0, Val_long(index));
   }
 
   CAMLreturn(ret);
@@ -141,9 +141,9 @@ CAMLprim value ml_stbtt_GetFontVMetrics(value fontinfo)
   stbtt_GetFontVMetrics(Fontinfo_val(fontinfo), &ascent, &descent, &line_gap);
 
   ret = caml_alloc(3, 0);
-  Store_field(ret, 0, Val_int(ascent));
-  Store_field(ret, 1, Val_int(descent));
-  Store_field(ret, 2, Val_int(line_gap));
+  Store_field(ret, 0, Val_long(ascent));
+  Store_field(ret, 1, Val_long(descent));
+  Store_field(ret, 2, Val_long(line_gap));
 
   CAMLreturn(ret);
 }
@@ -157,8 +157,8 @@ CAMLprim value ml_stbtt_GetGlyphHMetrics(value fontinfo, value glyph)
   stbtt_GetGlyphHMetrics(Fontinfo_val(fontinfo), Int_val(glyph), &adv, &lsb);
 
   ret = caml_alloc(2, 0);
-  Store_field(ret, 0, Val_int(adv));
-  Store_field(ret, 1, Val_int(lsb));
+  Store_field(ret, 0, Val_long(adv));
+  Store_field(ret, 1, Val_long(lsb));
 
   CAMLreturn(ret);
 }
@@ -170,7 +170,7 @@ CAMLprim value ml_stbtt_GetGlyphKernAdvance(value fontinfo, value glyph1, value 
 
   int adv = stbtt_GetGlyphKernAdvance(Fontinfo_val(fontinfo), Int_val(glyph1), Int_val(glyph2));
 
-  ret = Val_int(adv);
+  ret = Val_long(adv);
 
   CAMLreturn(ret);
 }
@@ -181,10 +181,10 @@ static value box(int x0, int y0, int x1, int y1)
   CAMLlocal1(ret);
 
   ret = caml_alloc(4, 0);
-  Store_field(ret, 0, x0);
-  Store_field(ret, 1, y0);
-  Store_field(ret, 2, x1);
-  Store_field(ret, 3, y1);
+  Store_field(ret, 0, Val_long(x0));
+  Store_field(ret, 1, Val_long(y0));
+  Store_field(ret, 2, Val_long(x1));
+  Store_field(ret, 3, Val_long(y1));
 
   CAMLreturn(ret);
 }
@@ -204,7 +204,7 @@ CAMLprim value ml_stbtt_GetGlyphBox(value fontinfo, value glyph)
   CAMLparam2(fontinfo, glyph);
 
   int x0, y0, x1, y1;
-  stbtt_GetGlyphBox(Fontinfo_val(fontinfo), Int_val(glyph), &x0, &y0, &x1, &y1);
+  stbtt_GetGlyphBox(Fontinfo_val(fontinfo), Long_val(glyph), &x0, &y0, &x1, &y1);
 
   CAMLreturn(box(x0, y0, x1, y1));
 }
@@ -234,8 +234,8 @@ CAMLprim value ml_stbtt_PackBegin(value buffer, value w, value h, value s, value
   CAMLlocal3(ret, pack, pack_context);
 
   unsigned char *data = Caml_ba_data_val(buffer);
-  int width = Int_val(w), height = Int_val(h), stride = Int_val(s),
-      padding = Int_val(p);
+  int width = Long_val(w), height = Long_val(h), stride = Long_val(s),
+      padding = Long_val(p);
 
   pack_context = caml_alloc_custom(&pack_context_custom_ops, sizeof(stbtt_pack_context), 0, 1);
   int result = stbtt_PackBegin(Data_custom_val(pack_context), data, width, height, stride, padding, NULL);
@@ -272,7 +272,7 @@ CAMLprim value ml_stbtt_packed_chars_count(value packed_chars)
 {
   CAMLparam1(packed_chars);
   ml_stbtt_packed_chars *data = Packed_chars_val(packed_chars);
-  CAMLreturn(Val_int(data->count));
+  CAMLreturn(Val_long(data->count));
 }
 
 CAMLprim value ml_stbtt_packed_chars_box(value packed_chars, value index)
