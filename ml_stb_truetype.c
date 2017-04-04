@@ -418,9 +418,9 @@ static int ml_stbtt_PackFontRanges(stbtt_pack_context *spc,
    return return_value;
 }
 
-CAMLprim value ml_stbtt_pack_font_ranges(value pack_context, value font_info, value font_index, value font_ranges)
+CAMLprim value ml_stbtt_pack_font_ranges(value pack_context, value font_info, value font_ranges)
 {
-  CAMLparam4(pack_context, font_info, font_index, font_ranges);
+  CAMLparam3(pack_context, font_info, font_ranges);
   CAMLlocal3(font_range, packed_ranges, ret);
 
   int num_ranges = Wosize_val(font_ranges), i;
