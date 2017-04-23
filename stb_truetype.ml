@@ -23,7 +23,8 @@ type codepoint = int
 
 type t
 
-external ml_stbtt_GetFontOffsetForIndex: buffer -> int -> offset = "ml_stbtt_GetFontOffsetForIndex"
+external ml_stbtt_GetFontOffsetForIndex: buffer -> int -> offset =
+  "ml_stbtt_GetFontOffsetForIndex" [@@noalloc]
 
 let rec enum buffer index =
   match ml_stbtt_GetFontOffsetForIndex buffer index with
@@ -32,10 +33,20 @@ let rec enum buffer index =
 let enum buffer = enum buffer 0
 
 external init : buffer -> offset -> t option = "ml_stbtt_InitFont"
-external find : t -> int -> glyph option = "ml_stbtt_FindGlyphIndex"
 
-external scale_for_pixel_height : t -> float -> float = "ml_stbtt_ScaleForPixelHeight"
-external scale_for_mapping_em_to_pixels : t -> float -> float = "ml_stbtt_ScaleForMappingEmToPixels"
+external get : t -> int -> glyph = "ml_stbtt_FindGlyphIndex"
+
+let invalid_glyph : glyph = 0
+
+let find t cp =
+  let result = get t cp in
+  if result = 0 then None else Some result
+
+external scale_for_pixel_height : t -> (float [@unboxed]) -> (float [@unboxed]) =
+  "ml_stbtt_ScaleForPixelHeight_bc" "ml_stbtt_ScaleForPixelHeight" [@@noalloc]
+
+external scale_for_mapping_em_to_pixels : t -> (float [@unboxed]) -> (float [@unboxed]) =
+  "ml_stbtt_ScaleForMappingEmToPixels_bc" "ml_stbtt_ScaleForMappingEmToPixels" [@@noalloc]
 
 type font_size =
   | Size_max  of float
@@ -51,7 +62,8 @@ external vmetrics : t -> vmetrics = "ml_stbtt_GetFontVMetrics"
 type hmetrics = {advance_width: int; left_side_bearing: int}
 external hmetrics : t -> glyph -> hmetrics = "ml_stbtt_GetGlyphHMetrics"
 
-external kern_advance : t -> glyph -> glyph -> int = "ml_stbtt_GetGlyphKernAdvance"
+external glyph_advance : t -> glyph -> int = "ml_stbtt_GetGlyphAdvance" [@@noalloc]
+external kern_advance : t -> glyph -> glyph -> int = "ml_stbtt_GetGlyphKernAdvance" [@@noalloc]
 
 type box = {x0: int; y0: int; x1: int; y1: int}
 
@@ -63,7 +75,7 @@ external glyph_box : t -> glyph -> box = "ml_stbtt_GetGlyphBox"
 type pack_context
 
 external pack_begin : buffer -> width:int -> height:int -> stride:int -> padding:int -> pack_context option = "ml_stbtt_PackBegin"
-external pack_set_oversampling : pack_context -> h:int -> v:int -> unit = "ml_stbtt_PackSetOversampling"
+external pack_set_oversampling : pack_context -> h:int -> v:int -> unit = "ml_stbtt_PackSetOversampling" [@@noalloc]
 
 type char_range = {
   font_size: font_size;
@@ -80,7 +92,7 @@ type char_metrics = {
   yoff2: float;
 }
 
-external packed_chars_count  : packed_chars -> int = "ml_stbtt_packed_chars_count"
+external packed_chars_count  : packed_chars -> int = "ml_stbtt_packed_chars_count" [@@noalloc]
 external packed_chars_box    : packed_chars -> int -> box = "ml_stbtt_packed_chars_box"
 external packed_chars_metrics : packed_chars -> int -> char_metrics = "ml_stbtt_packed_chars_metrics"
 
@@ -100,6 +112,7 @@ external string_of_packed_chars : packed_chars -> string = "ml_stbtt_string_of_p
 
 external make_glyph_bitmap: t -> buffer -> offset:int -> gw:int -> gh:int -> stride:int -> scale_x:float -> scale_y:float -> glyph -> unit
   = "ml_stbtt_MakeGlyphBitmap_bc" "ml_stbtt_MakeGlyphBitmap"
+  [@@noalloc]
 
 let make_glyph_bitmap t buffer ~width ~height ~scale_x ~scale_y box glyph =
   let dim = Bigarray.Array1.dim buffer in

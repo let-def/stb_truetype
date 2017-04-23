@@ -55,6 +55,14 @@ type glyph = private int
     Given a [codepoint], the first step is to turn it into a [glyph]. *)
 val find: t -> codepoint -> glyph option
 
+(** All functions taking a [glyph] as input will return a sensible default
+    value when given [invalid_glyph]. *)
+val invalid_glyph: glyph
+
+(** If a font have no glyph for a codepoint, [find] returns [None].
+    Get will return [invalid_glyph] instead.  *)
+val get: t -> codepoint -> glyph
+
 (*################################*)
 (** {1 Manipulating font metrics}
     @see <http://www.freetype.org/freetype2/docs/glyphs/glyphs-3.html> *)
@@ -90,6 +98,9 @@ type hmetrics = {
   left_side_bearing: int; (** distance from current position to the left of the character bounding box. *)
 }
 val hmetrics: t -> glyph -> hmetrics
+
+(** [glyph_advance t g] is [(hmetrics t g).advance_width]. *)
+val glyph_advance: t -> glyph -> int
 
 (** Kerning allows to vary [advance_width] to improve quality of the rendering.
     Given two glyphs, [kern_advance] will return an eventually more specific

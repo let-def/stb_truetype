@@ -12,13 +12,12 @@
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "stb_truetype.h"
 
-CAMLprim value ml_stbtt_GetFontOffsetForIndex(value ba, value vindex)
+value ml_stbtt_GetFontOffsetForIndex(value ba, value vindex)
 {
-  CAMLparam2(ba, vindex);
   unsigned char *data = Caml_ba_data_val(ba);
-  int index = Int_val(vindex);
+  int index = Long_val(vindex);
   int result = stbtt_GetFontOffsetForIndex(data, index);
-  CAMLreturn(Val_long(result));
+  return Val_long(result);
 }
 
 typedef struct {
@@ -64,13 +63,13 @@ static struct custom_operations fontinfo_custom_ops = {
 
 #define Fontinfo_val(x) (&ml_fontinfo_data(Field((x), 0)))
 
-CAMLprim value ml_stbtt_InitFont(value ba, value voffset)
+value ml_stbtt_InitFont(value ba, value voffset)
 {
   CAMLparam2(ba, voffset);
   CAMLlocal3(ret, pack, fontinfo);
 
   unsigned char *data = Caml_ba_data_val(ba);
-  int index = Int_val(voffset);
+  int index = Long_val(voffset);
 
   fontinfo = caml_alloc_custom(&fontinfo_custom_ops, sizeof(ml_fontinfo), 0, 1);
   static intnat ids = 0;
@@ -92,47 +91,34 @@ CAMLprim value ml_stbtt_InitFont(value ba, value voffset)
   CAMLreturn(ret);
 }
 
-CAMLprim value ml_stbtt_FindGlyphIndex(value fontinfo, value codepoint)
+value ml_stbtt_FindGlyphIndex(value fontinfo, value codepoint)
 {
-  CAMLparam2(fontinfo, codepoint);
-  CAMLlocal1(ret);
-
-  int index = stbtt_FindGlyphIndex(Fontinfo_val(fontinfo), Int_val(codepoint));
-
-  if (index == 0)
-    ret = Val_unit;
-  else
-  {
-    ret = caml_alloc(1, 0);
-    Store_field(ret, 0, Val_long(index));
-  }
-
-  CAMLreturn(ret);
+  return Val_long(stbtt_FindGlyphIndex(Fontinfo_val(fontinfo), Long_val(codepoint)));
 }
 
-CAMLprim value ml_stbtt_ScaleForPixelHeight(value fontinfo, value height)
+double ml_stbtt_ScaleForPixelHeight(value fontinfo, double height)
 {
-  CAMLparam2(fontinfo, height);
-  CAMLlocal1(ret);
-
-  float scale = stbtt_ScaleForPixelHeight(Fontinfo_val(fontinfo), Double_val(height));
-  ret = caml_copy_double(scale);
-
-  CAMLreturn(ret);
+  return stbtt_ScaleForPixelHeight(Fontinfo_val(fontinfo), height);
 }
 
-CAMLprim value ml_stbtt_ScaleForMappingEmToPixels(value fontinfo, value height)
+value ml_stbtt_ScaleForPixelHeight_bc(value fontinfo, value height)
 {
-  CAMLparam2(fontinfo, height);
-  CAMLlocal1(ret);
-
-  float scale = stbtt_ScaleForMappingEmToPixels(Fontinfo_val(fontinfo), Double_val(height));
-  ret = caml_copy_double(scale);
-
-  CAMLreturn(ret);
+  double result = ml_stbtt_ScaleForPixelHeight(fontinfo, height);
+  return caml_copy_double(result);
 }
 
-CAMLprim value ml_stbtt_GetFontVMetrics(value fontinfo)
+double ml_stbtt_ScaleForMappingEmToPixels(value fontinfo, double height)
+{
+  return stbtt_ScaleForMappingEmToPixels(Fontinfo_val(fontinfo), height);
+}
+
+value ml_stbtt_ScaleForMappingEmToPixels_bc(value fontinfo, value height)
+{
+  double result = ml_stbtt_ScaleForMappingEmToPixels(fontinfo, height);
+  return caml_copy_double(result);
+}
+
+value ml_stbtt_GetFontVMetrics(value fontinfo)
 {
   CAMLparam1(fontinfo);
   CAMLlocal1(ret);
@@ -148,13 +134,13 @@ CAMLprim value ml_stbtt_GetFontVMetrics(value fontinfo)
   CAMLreturn(ret);
 }
 
-CAMLprim value ml_stbtt_GetGlyphHMetrics(value fontinfo, value glyph)
+value ml_stbtt_GetGlyphHMetrics(value fontinfo, value glyph)
 {
   CAMLparam2(fontinfo, glyph);
   CAMLlocal1(ret);
 
   int adv, lsb;
-  stbtt_GetGlyphHMetrics(Fontinfo_val(fontinfo), Int_val(glyph), &adv, &lsb);
+  stbtt_GetGlyphHMetrics(Fontinfo_val(fontinfo), Long_val(glyph), &adv, &lsb);
 
   ret = caml_alloc(2, 0);
   Store_field(ret, 0, Val_long(adv));
@@ -163,16 +149,16 @@ CAMLprim value ml_stbtt_GetGlyphHMetrics(value fontinfo, value glyph)
   CAMLreturn(ret);
 }
 
-CAMLprim value ml_stbtt_GetGlyphKernAdvance(value fontinfo, value glyph1, value glyph2)
+value ml_stbtt_GetGlyphAdvance(value fontinfo, value glyph)
 {
-  CAMLparam3(fontinfo, glyph1, glyph2);
-  CAMLlocal1(ret);
+  int adv = 0, lsb = 0;
+  stbtt_GetGlyphHMetrics(Fontinfo_val(fontinfo), Long_val(glyph), &adv, &lsb);
+  return Val_long(adv);
+}
 
-  int adv = stbtt_GetGlyphKernAdvance(Fontinfo_val(fontinfo), Int_val(glyph1), Int_val(glyph2));
-
-  ret = Val_long(adv);
-
-  CAMLreturn(ret);
+value ml_stbtt_GetGlyphKernAdvance(value fontinfo, value glyph1, value glyph2)
+{
+  return Val_long(stbtt_GetGlyphKernAdvance(Fontinfo_val(fontinfo), Long_val(glyph1), Long_val(glyph2)));
 }
 
 static value box(int x0, int y0, int x1, int y1)
@@ -189,7 +175,7 @@ static value box(int x0, int y0, int x1, int y1)
   CAMLreturn(ret);
 }
 
-CAMLprim value ml_stbtt_GetFontBoundingBox(value fontinfo)
+value ml_stbtt_GetFontBoundingBox(value fontinfo)
 {
   CAMLparam1(fontinfo);
 
@@ -199,11 +185,11 @@ CAMLprim value ml_stbtt_GetFontBoundingBox(value fontinfo)
   CAMLreturn(box(x0, y0, x1, y1));
 }
 
-CAMLprim value ml_stbtt_GetGlyphBox(value fontinfo, value glyph)
+value ml_stbtt_GetGlyphBox(value fontinfo, value glyph)
 {
   CAMLparam2(fontinfo, glyph);
 
-  int x0, y0, x1, y1;
+  int x0 = 0, y0 = 0, x1 = 0, y1 = 0;
   stbtt_GetGlyphBox(Fontinfo_val(fontinfo), Long_val(glyph), &x0, &y0, &x1, &y1);
 
   CAMLreturn(box(x0, y0, x1, y1));
@@ -228,7 +214,7 @@ static struct custom_operations pack_context_custom_ops = {
   .deserialize = custom_deserialize_default
 };
 
-CAMLprim value ml_stbtt_PackBegin(value buffer, value w, value h, value s, value p)
+value ml_stbtt_PackBegin(value buffer, value w, value h, value s, value p)
 {
   CAMLparam5(buffer, w, h, s, p);
   CAMLlocal3(ret, pack, pack_context);
@@ -255,11 +241,10 @@ CAMLprim value ml_stbtt_PackBegin(value buffer, value w, value h, value s, value
   CAMLreturn(ret);
 }
 
-CAMLprim value ml_stbtt_PackSetOversampling(value ctx, value h, value v)
+value ml_stbtt_PackSetOversampling(value ctx, value h, value v)
 {
-  CAMLparam3(ctx, h, v);
-  stbtt_PackSetOversampling(Pack_context_val(ctx), Int_val(h), Int_val(v));
-  CAMLreturn(Val_unit);
+  stbtt_PackSetOversampling(Pack_context_val(ctx), Long_val(h), Long_val(v));
+  return Val_unit;
 }
 
 typedef struct {
@@ -268,20 +253,19 @@ typedef struct {
 } ml_stbtt_packed_chars;
 
 #define Packed_chars_val(x) ((ml_stbtt_packed_chars *)String_val(x))
-CAMLprim value ml_stbtt_packed_chars_count(value packed_chars)
+value ml_stbtt_packed_chars_count(value packed_chars)
 {
-  CAMLparam1(packed_chars);
   ml_stbtt_packed_chars *data = Packed_chars_val(packed_chars);
-  CAMLreturn(Val_long(data->count));
+  return Val_long(data->count);
 }
 
-CAMLprim value ml_stbtt_packed_chars_box(value packed_chars, value index)
+value ml_stbtt_packed_chars_box(value packed_chars, value index)
 {
   CAMLparam2(packed_chars, index);
   CAMLlocal1(ret);
 
   ml_stbtt_packed_chars *data = Packed_chars_val(packed_chars);
-  unsigned int idx = Int_val(index);
+  unsigned int idx = Long_val(index);
 
   if (idx >= data->count)
     caml_invalid_argument("Stb_truetype.packed_chars_box");
@@ -294,13 +278,13 @@ CAMLprim value ml_stbtt_packed_chars_box(value packed_chars, value index)
   CAMLreturn(ret);
 }
 
-CAMLprim value ml_stbtt_packed_chars_metrics(value packed_chars, value index)
+value ml_stbtt_packed_chars_metrics(value packed_chars, value index)
 {
   CAMLparam2(packed_chars, index);
   CAMLlocal1(ret);
 
   ml_stbtt_packed_chars *data = Packed_chars_val(packed_chars);
-  unsigned int idx = Int_val(index);
+  unsigned int idx = Long_val(index);
 
   if (idx >= data->count)
     caml_invalid_argument("Stb_truetype.packed_chars_metrics");
@@ -319,7 +303,7 @@ CAMLprim value ml_stbtt_packed_chars_metrics(value packed_chars, value index)
   CAMLreturn(ret);
 }
 
-CAMLprim value ml_stbtt_packed_chars_quad(value packed_chars, value index, value bw, value bh, value sx, value sy, value int_align)
+value ml_stbtt_packed_chars_quad(value packed_chars, value index, value bw, value bh, value sx, value sy, value int_align)
 {
   CAMLparam5(packed_chars, index, bw, bh, sx);
   CAMLxparam1(sy);
@@ -327,14 +311,14 @@ CAMLprim value ml_stbtt_packed_chars_quad(value packed_chars, value index, value
 
   ml_stbtt_packed_chars *data = Packed_chars_val(packed_chars);
   stbtt_aligned_quad q;
-  unsigned int idx = Int_val(index);
+  unsigned int idx = Long_val(index);
 
   if (idx >= data->count)
     caml_invalid_argument("Stb_truetype.packed_chars_quad");
   else
   {
     float xpos = Double_val(sx), ypos = Double_val(sy);
-    stbtt_GetPackedQuad(&data->chars[0], Int_val(bw), Int_val(bh), idx, &xpos, &ypos, &q, Int_val(int_align));
+    stbtt_GetPackedQuad(&data->chars[0], Long_val(bw), Long_val(bh), idx, &xpos, &ypos, &q, Long_val(int_align));
 
     quad = caml_alloc(8 * Double_wosize, Double_array_tag);
     Store_double_field(quad, 0, q.x0);
@@ -356,7 +340,7 @@ CAMLprim value ml_stbtt_packed_chars_quad(value packed_chars, value index, value
   CAMLreturn(ret);
 }
 
-CAMLprim value ml_stbtt_packed_chars_quad_bc(value *argv, int argn)
+value ml_stbtt_packed_chars_quad_bc(value *argv, int argn)
 {
   return ml_stbtt_packed_chars_quad(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5], argv[6]);
 }
@@ -418,7 +402,7 @@ static int ml_stbtt_PackFontRanges(stbtt_pack_context *spc,
    return return_value;
 }
 
-CAMLprim value ml_stbtt_pack_font_ranges(value pack_context, value font_info, value font_ranges)
+value ml_stbtt_pack_font_ranges(value pack_context, value font_info, value font_ranges)
 {
   CAMLparam3(pack_context, font_info, font_ranges);
   CAMLlocal3(font_range, packed_ranges, ret);
@@ -432,8 +416,8 @@ CAMLprim value ml_stbtt_pack_font_ranges(value pack_context, value font_info, va
     font_range = Field(font_ranges, i);
     // Validate font_range input?
     ranges[i].font_size = font_range_font_size(font_range);
-    ranges[i].first_unicode_codepoint_in_range = Int_val(Field(font_range, 1));
-    ranges[i].num_chars = Int_val(Field(font_range, 2));
+    ranges[i].first_unicode_codepoint_in_range = Long_val(Field(font_range, 1));
+    ranges[i].num_chars = Long_val(Field(font_range, 2));
     ranges[i].chardata_for_range = NULL;
 
     Store_field(packed_ranges, i, packed_chars_alloc(ranges[i].num_chars, &ranges[i]));
@@ -507,7 +491,7 @@ static float get_float(unsigned char **s)
 
 #define PACKED_CHARS_VERSION 1
 
-CAMLprim value ml_stbtt_string_of_packed_chars(value packed_chars)
+value ml_stbtt_string_of_packed_chars(value packed_chars)
 {
   CAMLparam1(packed_chars);
   CAMLlocal1(ret);
@@ -545,7 +529,7 @@ CAMLprim value ml_stbtt_string_of_packed_chars(value packed_chars)
   CAMLreturn(ret);
 }
 
-CAMLprim value ml_stbtt_packed_chars_of_string(value str)
+value ml_stbtt_packed_chars_of_string(value str)
 {
   CAMLparam1(str);
   CAMLlocal1(ret);
@@ -580,7 +564,7 @@ CAMLprim value ml_stbtt_packed_chars_of_string(value str)
   CAMLreturn(ret);
 }
 
-CAMLprim value ml_stbtt_MakeGlyphBitmap(value fontinfo, value buffer, value offset, value gw, value gh, value stride, value scale_x, value scale_y, value glyph)
+value ml_stbtt_MakeGlyphBitmap(value fontinfo, value buffer, value offset, value gw, value gh, value stride, value scale_x, value scale_y, value glyph)
 {
   stbtt_MakeGlyphBitmap(
         Fontinfo_val(fontinfo),
@@ -593,13 +577,13 @@ CAMLprim value ml_stbtt_MakeGlyphBitmap(value fontinfo, value buffer, value offs
   return Val_unit;
 }
 
-CAMLprim value ml_stbtt_MakeGlyphBitmap_bc(value *argv, int argn)
+value ml_stbtt_MakeGlyphBitmap_bc(value *argv, int argn)
 {
   if (argn != 9) abort();
   return ml_stbtt_MakeGlyphBitmap(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5], argv[6], argv[7], argv[8]);
 }
 
-CAMLprim value ml_stbtt_GetGlyphBitmapBox(value fontinfo, value glyph, value scale_x, value scale_y)
+value ml_stbtt_GetGlyphBitmapBox(value fontinfo, value glyph, value scale_x, value scale_y)
 {
   int x0, y0, x1, y1;
   stbtt_GetGlyphBitmapBox(Fontinfo_val(fontinfo), Long_val(glyph), Double_val(scale_x), Double_val(scale_y), &x0, &y0, &x1, &y1);
