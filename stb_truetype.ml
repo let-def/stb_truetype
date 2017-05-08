@@ -132,3 +132,23 @@ let make_glyph_bitmap t buffer ~width ~height ~scale_x ~scale_y box glyph =
 
 external get_glyph_bitmap_box: t -> glyph -> scale_x:float -> scale_y:float -> box
   = "ml_stbtt_GetGlyphBitmapBox"
+
+external blur_glyph_bitmap: buffer -> offset:int -> gw:int -> gh:int -> stride:int -> float -> unit
+  = "ml_stbtt_BlurGlyphBitmap_bc" "ml_stbtt_BlurGlyphBitmap"
+  [@@noalloc]
+
+let blur_glyph_bitmap buffer ~width ~height box amount =
+  let dim = Bigarray.Array1.dim buffer in
+  if width * height > dim then
+    invalid_arg "Stb_truetype.blur_glyph_bitmap: \
+                 width * height bigger than buffer";
+  if box.x0 > box.x1 || box.y0 > box.y1 then
+    invalid_arg "Stb_truetype.blur_glyph_bitmap: malformed box";
+  if box.x0 < 0 || box.y0 < 0 || box.x1 > width || box.y1 > height then
+    invalid_arg "Stb_truetype.blur_glyph_bitmap: box outside of buffer";
+  blur_glyph_bitmap buffer
+    ~stride:width
+    ~offset:(box.y0 * width + box.x0)
+    ~gw:(box.x1-box.x0)
+    ~gh:(box.y1-box.y0)
+    amount

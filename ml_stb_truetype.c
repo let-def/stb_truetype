@@ -589,3 +589,83 @@ value ml_stbtt_GetGlyphBitmapBox(value fontinfo, value glyph, value scale_x, val
   stbtt_GetGlyphBitmapBox(Fontinfo_val(fontinfo), Long_val(glyph), Double_val(scale_x), Double_val(scale_y), &x0, &y0, &x1, &y1);
   return box(x0, y0, x1, y1);
 }
+
+// Based on Exponential blur, Jani Huhtanen, 2006
+// and [https://github.com/memononen/fontstash](fontstash), Mikko Mononen, 2014
+
+#define APREC 16
+#define ZPREC 7
+
+#define APPROX(alpha, reg, acc) \
+  ((alpha * (((int)(reg) << ZPREC) - acc)) >> APREC)
+
+#define BLUR(reg, acc) \
+  do { \
+    acc += APPROX(alpha, reg, acc); \
+    reg = (unsigned char)(acc >> ZPREC); \
+  } while (0)
+
+static void expblur_row(unsigned char* dst, int w, int alpha)
+{
+  int x, acc;
+
+  for (x = 1, acc = 0; x < w; ++x) BLUR(dst[x], acc);
+  dst[w-1] = 0;
+
+  for (x = w - 2, acc = 0; x >= 0; --x) BLUR(dst[x], acc);
+  dst[0] = 0;
+}
+
+static void expblur_col(unsigned char* dst, int h, int stride, int alpha)
+{
+  int y, acc;
+
+  for (y = stride, acc = 0; y < h*stride; y += stride) BLUR(dst[y], acc);
+  dst[(h-1)*stride] = 0;
+
+  for (y = (h - 2) * stride, acc = 0; y >= 0; y -= stride) BLUR(dst[y], acc);
+  dst[0] = 0;
+}
+
+static void expblur(unsigned char* dst, int w, int h, int stride, float blur)
+{
+	int i, alpha;
+	float sigma;
+
+  if (blur < 0.01) return;
+
+	// Calculate the alpha such that 90% of the kernel is within the radius. (Kernel extends to infinity)
+	sigma = blur * 0.57735f; // 1 / sqrt(3)
+	alpha = (int)((1<<APREC) * (1.0f - expf(-2.3f / (sigma + 1.0f))));
+
+	for (i = 0; i < h; ++i)
+  {
+    expblur_row(dst + i * stride, w, alpha);
+    expblur_row(dst + i * stride, w, alpha);
+	}
+
+	for (i = 0; i < w; ++i)
+  {
+    expblur_col(dst + i, h, stride, alpha);
+    expblur_col(dst + i, h, stride, alpha);
+	}
+}
+
+value ml_stbtt_BlurGlyphBitmap(value buffer, value offset, value gw, value gh, value stride, value blur)
+{
+  expblur(
+        Caml_ba_data_val(buffer) + Long_val(offset),
+        Long_val(gw),
+        Long_val(gh),
+        Long_val(stride),
+        Double_val(blur)
+      );
+  return Val_unit;
+}
+
+value ml_stbtt_BlurGlyphBitmap_bc(value *argv, int argn)
+{
+  if (argn != 6) abort();
+  return ml_stbtt_BlurGlyphBitmap(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
+}
+
