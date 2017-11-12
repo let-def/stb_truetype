@@ -12,6 +12,9 @@ $ make install
 
 ## CHANGELOG
 
+Version 0.3, Sun Nov 12 11:52:38 CET 2017
+  Add glyph bluring primitive
+
 Version 0.2, Sun Nov 27 19:59:41 CET 2016
   Update to stb\_truetype.h v1.12 and stb\_rect\_pack.h v0.10
 
