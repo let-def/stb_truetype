@@ -20,40 +20,7 @@ value ml_stbtt_GetFontOffsetForIndex(value ba, value vindex)
   return Val_long(result);
 }
 
-typedef struct {
-  intnat id;
-  stbtt_fontinfo fontinfo;
-} ml_fontinfo;
-
-#define ml_fontinfo_id(v) (((ml_fontinfo*)Data_custom_val(v))->id)
-#define ml_fontinfo_data(v) (((ml_fontinfo*)Data_custom_val(v))->fontinfo)
-
-static int ml_fontinfo_compare(value v1, value v2)
-{
-  intnat i1 = ml_fontinfo_id(v1);
-  intnat i2 = ml_fontinfo_id(v2);
-
-  if (i1 < i2)
-    return -1;
-  else if (i1 > i2)
-    return 1;
-  else
-    return 0;
-}
-
-static intnat ml_fontinfo_hash(value v)
-{
-  return ml_fontinfo_id(v);
-}
-
-static struct custom_operations fontinfo_custom_ops = {
-  .identifier  = "stbtt_fontinfo",
-  .finalize    = custom_finalize_default,
-  .compare     = ml_fontinfo_compare,
-  .hash        = ml_fontinfo_hash,
-  .serialize   = custom_serialize_default,
-  .deserialize = custom_deserialize_default
-};
+#define ml_fontinfo_data(v) ((stbtt_fontinfo*)Data_abstract_val(v))
 
 /* Layout of fontinfo and, later, pack_context:
  * (custom, buffer)
@@ -61,7 +28,7 @@ static struct custom_operations fontinfo_custom_ops = {
  *       buffer is a reference kept to underlying bigarray store
  */
 
-#define Fontinfo_val(x) (&ml_fontinfo_data(Field((x), 0)))
+#define Fontinfo_val(x) (ml_fontinfo_data(Field((x), 0)))
 
 value ml_stbtt_InitFont(value ba, value voffset)
 {
@@ -71,18 +38,19 @@ value ml_stbtt_InitFont(value ba, value voffset)
   unsigned char *data = Caml_ba_data_val(ba);
   int index = Long_val(voffset);
 
-  fontinfo = caml_alloc_custom(&fontinfo_custom_ops, sizeof(ml_fontinfo), 0, 1);
+  size_t wosize = 1 + (sizeof(stbtt_fontinfo) + sizeof(value) - 1) / sizeof(value);
+  fontinfo = caml_alloc(wosize, Abstract_tag);
+  int result = stbtt_InitFont(ml_fontinfo_data(fontinfo), data, index);
   static intnat ids = 0;
-  ml_fontinfo_id(fontinfo) = ids++;
-  int result = stbtt_InitFont(&ml_fontinfo_data(fontinfo), data, index);
 
   if (result == 0)
     ret = Val_unit;
   else
   {
-    pack = caml_alloc(2, 0);
+    pack = caml_alloc(3, Object_tag);
     Store_field(pack, 0, fontinfo);
-    Store_field(pack, 1, ba);
+    Store_field(pack, 1, Val_long(ids++));
+    Store_field(pack, 2, ba);
 
     ret = caml_alloc(1, 0);
     Store_field(ret, 0, pack);
