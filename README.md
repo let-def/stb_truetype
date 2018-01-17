@@ -12,6 +12,10 @@ $ make install
 
 ## CHANGELOG
 
+Version 0.4, Wed Jan 17 20:43:52 JST 2018
+  Change font representation to behave well with OCaml ad-hoc primitives.
+  Support only OCaml >=4.02 because of `[@@noalloc]` (could be made optional?)
+
 Version 0.3, Sun Nov 12 11:52:38 CET 2017
   Add glyph bluring primitive
 
