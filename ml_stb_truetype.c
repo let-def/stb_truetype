@@ -1,3 +1,5 @@
+#define CAML_NAME_SPACE
+
 #include <assert.h>
 #include <stdio.h>
 #include <caml/mlvalues.h>
@@ -6,6 +8,12 @@
 #include <caml/alloc.h>
 #include <caml/bigarray.h>
 #include <caml/custom.h>
+
+/* Define Data_abstract_val if necessary.
+ * It was introduced in OCaml 4.05.0 */
+#ifndef Data_abstract_val
+#define Data_abstract_val Op_val
+#endif
 
 #define STB_RECT_PACK_IMPLEMENTATION
 #include "stb_rect_pack.h"
