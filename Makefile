@@ -6,7 +6,7 @@ EXT_DLL=$(shell $(OCAMLC) -config | grep ext_dll | cut -f 2 -d ' ')
 EXT_LIB=$(shell $(OCAMLC) -config | grep ext_lib | cut -f 2 -d ' ')
 EXT_OBJ=$(shell $(OCAMLC) -config | grep ext_obj | cut -f 2 -d ' ')
 
-CFLAGS=-O3 -ffast-math
+CFLAGS=-O3 -ffast-math -Werror
 
 all: stb_truetype.cma stb_truetype.cmxa
 
