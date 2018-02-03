@@ -12,6 +12,9 @@ $ make install
 
 ## CHANGELOG
 
+Version 0.5, Sat Feb  3 07:05:53 CET 2018
+  FFI code was wrong with OCaml < 4.05.0 due to missing macro!
+
 Version 0.4, Wed Jan 17 20:43:52 JST 2018
   Change font representation to behave well with OCaml ad-hoc primitives.
   Support only OCaml >=4.02 because of `[@@noalloc]` (could be made optional?)
