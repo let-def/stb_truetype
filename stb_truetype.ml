@@ -120,7 +120,10 @@ let make_glyph_bitmap t buffer ~width ~height ~scale_x ~scale_y box glyph =
     invalid_arg "Stb_truetype.make_glyph_bitmap: \
                  width * height bigger than buffer";
   if box.x0 > box.x1 || box.y0 > box.y1 then
-    invalid_arg "Stb_truetype.make_glyph_bitmap: malformed box";
+    Printf.ksprintf invalid_arg
+      "Stb_truetype.make_glyph_bitmap: malformed box \
+       {x0=%d; y0=%d; x1=%d; y1=%d}"
+      box.x0 box.x1 box.y0 box.y1;
   if box.x0 < 0 || box.y0 < 0 || box.x1 > width || box.y1 > height then
     invalid_arg "Stb_truetype.make_glyph_bitmap: box outside of buffer";
   make_glyph_bitmap t buffer
