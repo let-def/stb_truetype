@@ -79,7 +79,7 @@ double ml_stbtt_ScaleForPixelHeight(value fontinfo, double height)
 
 value ml_stbtt_ScaleForPixelHeight_bc(value fontinfo, value height)
 {
-  double result = ml_stbtt_ScaleForPixelHeight(fontinfo, height);
+  double result = ml_stbtt_ScaleForPixelHeight(fontinfo, Double_val(height));
   return caml_copy_double(result);
 }
 
@@ -90,7 +90,7 @@ double ml_stbtt_ScaleForMappingEmToPixels(value fontinfo, double height)
 
 value ml_stbtt_ScaleForMappingEmToPixels_bc(value fontinfo, value height)
 {
-  double result = ml_stbtt_ScaleForMappingEmToPixels(fontinfo, height);
+  double result = ml_stbtt_ScaleForMappingEmToPixels(fontinfo, Double_val(height));
   return caml_copy_double(result);
 }
 
