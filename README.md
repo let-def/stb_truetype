@@ -12,6 +12,9 @@ $ make install
 
 ## CHANGELOG
 
+Version 0.6, Sun Jul  8 17:35:11 CEST 2018
+  Some stubs were wrong with bytecode backend
+
 Version 0.5, Sat Feb  3 07:05:53 CET 2018
   FFI code was wrong with OCaml < 4.05.0 due to missing macro!
 
