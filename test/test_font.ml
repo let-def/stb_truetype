@@ -2,16 +2,20 @@ let map_filename filename =
   let fd = Unix.openfile filename [Unix.O_RDONLY] 0 in
   let sz = Unix.lseek fd 0 Unix.SEEK_END in
   assert (Unix.lseek fd 0 Unix.SEEK_SET = 0);
-  let arr = Bigarray.Array1.map_file fd Bigarray.int8_unsigned
-      Bigarray.c_layout false sz in
+  let arr =
+    Bigarray.array1_of_genarray @@
+    Unix.map_file fd Bigarray.int8_unsigned
+      Bigarray.c_layout false [|sz|] in
   Unix.close fd;
   arr
 
 let save_buffer filename arr =
   let fd = Unix.openfile filename [Unix.O_CREAT; Unix.O_RDWR] 0o644 in
   Unix.ftruncate fd (Bigarray.Array1.dim arr);
-  let arr' = Bigarray.Array1.map_file fd Bigarray.int8_unsigned
-      Bigarray.c_layout true (Bigarray.Array1.dim arr) in
+  let arr' =
+    Bigarray.array1_of_genarray @@
+    Unix.map_file fd Bigarray.int8_unsigned
+      Bigarray.c_layout true [|Bigarray.Array1.dim arr|] in
   Bigarray.Array1.blit arr arr';
   Unix.close fd
 
