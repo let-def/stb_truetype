@@ -123,7 +123,7 @@ let make_glyph_bitmap t buffer ~width ~height ~scale_x ~scale_y box glyph =
     Printf.ksprintf invalid_arg
       "Stb_truetype.make_glyph_bitmap: malformed box \
        {x0=%d; y0=%d; x1=%d; y1=%d}"
-      box.x0 box.x1 box.y0 box.y1;
+      box.x0 box.y0 box.x1 box.y1;
   if box.x0 < 0 || box.y0 < 0 || box.x1 > width || box.y1 > height then
     invalid_arg "Stb_truetype.make_glyph_bitmap: box outside of buffer";
   make_glyph_bitmap t buffer
@@ -146,7 +146,7 @@ let make_glyph_bitmap_subpixel t buffer ~width ~height ~scale_x ~scale_y ~shift_
     Printf.ksprintf invalid_arg
       "Stb_truetype.make_glyph_bitmap_subpixel: malformed box \
        {x0=%d; y0=%d; x1=%d; y1=%d}"
-      box.x0 box.x1 box.y0 box.y1;
+      box.x0 box.y0 box.x1 box.y1;
   if box.x0 < 0 || box.y0 < 0 || box.x1 > width || box.y1 > height then
     invalid_arg "Stb_truetype.make_glyph_bitmap_subpixel: box outside of buffer";
   make_glyph_bitmap_subpixel t buffer
