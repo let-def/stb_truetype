@@ -559,6 +559,26 @@ value ml_stbtt_MakeGlyphBitmap_bc(value *argv, int argn)
   return ml_stbtt_MakeGlyphBitmap(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5], argv[6], argv[7], argv[8]);
 }
 
+value ml_stbtt_MakeGlyphBitmapSubpixel(value fontinfo, value buffer, value offset, value gw, value gh, value stride, value scale_x, value scale_y, value shift_x, value shift_y, value glyph)
+{
+  stbtt_MakeGlyphBitmapSubpixel(
+        Fontinfo_val(fontinfo),
+        Caml_ba_data_val(buffer) + Long_val(offset),
+        Long_val(gw), Long_val(gh),
+        Long_val(stride),
+        Double_val(scale_x), Double_val(scale_y),
+        Double_val(shift_x), Double_val(shift_y),
+        Long_val(glyph)
+      );
+  return Val_unit;
+}
+
+value ml_stbtt_MakeGlyphBitmapSubpixel_bc(value *argv, int argn)
+{
+  if (argn != 11) abort();
+  return ml_stbtt_MakeGlyphBitmapSubpixel(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5], argv[6], argv[7], argv[8], argv[9], argv[10]);
+}
+
 value ml_stbtt_GetGlyphBitmapBox(value fontinfo, value glyph, value scale_x, value scale_y)
 {
   int x0, y0, x1, y1;
@@ -683,7 +703,7 @@ value ml_stbtt_GetGlyphBitmap(value fontinfo, value glyph, value scale_x, value 
 
 value ml_stbtt_GetGlyphBitmapSubpixel(value fontinfo, value glyph, value scale_x, value scale_y, value shift_x, value shift_y)
 {
-  CAMLparam6(fontinfo, glyph, scale_x, scale_y, shift_x, shift_y);
+  CAMLparam5(fontinfo, scale_x, scale_y, shift_x, shift_y);
   CAMLlocal2(ret, ba);
   int w, h, xoff, yoff;
   unsigned char* bitmap =
