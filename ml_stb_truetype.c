@@ -566,6 +566,20 @@ value ml_stbtt_GetGlyphBitmapBox(value fontinfo, value glyph, value scale_x, val
   return box(x0, y0, x1, y1);
 }
 
+value ml_stbtt_GetGlyphBitmapBoxSubpixel(value fontinfo, value glyph, value scale_x, value scale_y, value shift_x, value shift_y)
+{
+  int x0, y0, x1, y1;
+  stbtt_GetGlyphBitmapBoxSubpixel(Fontinfo_val(fontinfo), Long_val(glyph), Double_val(scale_x), Double_val(scale_y),
+                                  Double_val(shift_x), Double_val(shift_y), &x0, &y0, &x1, &y1);
+  return box(x0, y0, x1, y1);
+}
+
+value ml_stbtt_GetGlyphBitmapBoxSubpixel_bc(value *argv, int argn)
+{
+  if (argn != 6) abort();
+  return ml_stbtt_GetGlyphBitmapBoxSubpixel(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
+}
+
 // Based on Exponential blur, Jani Huhtanen, 2006
 // and [https://github.com/memononen/fontstash](fontstash), Mikko Mononen, 2014
 
@@ -645,3 +659,54 @@ value ml_stbtt_BlurGlyphBitmap_bc(value *argv, int argn)
   return ml_stbtt_BlurGlyphBitmap(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
 }
 
+value ml_stbtt_GetGlyphBitmap(value fontinfo, value glyph, value scale_x, value scale_y)
+{
+  CAMLparam4(fontinfo, scale_x, scale_y, glyph);
+  CAMLlocal2(ret, ba);
+  int w, h, xoff, yoff;
+  unsigned char* bitmap =
+    stbtt_GetGlyphBitmap(Fontinfo_val(fontinfo),
+                         Double_val(scale_x),
+                         Double_val(scale_y),
+                         Long_val(glyph),
+                         &w, &h, &xoff, &yoff);
+  long dims[1] = { w * h };
+  ba = caml_ba_alloc(CAML_BA_UINT8 | CAML_BA_C_LAYOUT, 1, bitmap, dims);
+  ret = caml_alloc(5, 0);
+  Store_field(ret, 0, ba);
+  Store_field(ret, 1, Val_int(w));
+  Store_field(ret, 2, Val_int(h));
+  Store_field(ret, 3, Val_int(xoff));
+  Store_field(ret, 4, Val_int(yoff));
+  CAMLreturn(ret);
+}
+
+value ml_stbtt_GetGlyphBitmapSubpixel(value fontinfo, value glyph, value scale_x, value scale_y, value shift_x, value shift_y)
+{
+  CAMLparam6(fontinfo, glyph, scale_x, scale_y, shift_x, shift_y);
+  CAMLlocal2(ret, ba);
+  int w, h, xoff, yoff;
+  unsigned char* bitmap =
+    stbtt_GetGlyphBitmapSubpixel(Fontinfo_val(fontinfo),
+                                 Double_val(scale_x),
+                                 Double_val(scale_y),
+                                 Double_val(shift_x),
+                                 Double_val(shift_y),
+                                 Long_val(glyph),
+                                 &w, &h, &xoff, &yoff);
+  long dims[1] = { w * h };
+  ba = caml_ba_alloc(CAML_BA_UINT8 | CAML_BA_C_LAYOUT, 1, bitmap, dims);
+  ret = caml_alloc(5, 0);
+  Store_field(ret, 0, ba);
+  Store_field(ret, 1, Val_int(w));
+  Store_field(ret, 2, Val_int(h));
+  Store_field(ret, 3, Val_int(xoff));
+  Store_field(ret, 4, Val_int(yoff));
+  CAMLreturn(ret);
+}
+
+value ml_stbtt_GetGlyphBitmapSubpixel_bc(value *argv, int argn)
+{
+  if (argn != 6) abort();
+  return ml_stbtt_GetGlyphBitmapSubpixel(argv[0], argv[1], argv[2], argv[3], argv[4], argv[5]);
+}
