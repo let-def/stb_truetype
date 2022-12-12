@@ -225,7 +225,11 @@ val packed_chars_of_string: string -> packed_chars
 val make_glyph_bitmap: t -> buffer -> width:int -> height:int ->
   scale_x:float -> scale_y:float -> box -> glyph -> unit
 
+val make_glyph_bitmap_subpixel: t -> buffer -> width:int -> height:int ->
+  scale_x:float -> scale_y:float -> shift_x:float -> shift_y:float -> box -> glyph -> unit
+
 val get_glyph_bitmap_box: t -> glyph -> scale_x:float -> scale_y:float -> box
+val get_glyph_bitmap_box_subpixel: t -> glyph -> scale_x:float -> scale_y:float -> shift_x:float -> shift_y:float -> box
 
 val blur_glyph_bitmap: buffer -> width:int -> height:int -> box -> float -> unit
 
@@ -238,3 +242,4 @@ type glyph_bitmap = {
 }
 
 val get_glyph_bitmap: t -> glyph -> scale_x:float -> scale_y:float -> glyph_bitmap
+val get_glyph_bitmap_subpixel: t -> glyph -> scale_x:float -> scale_y:float -> shift_x:float -> shift_y:float -> glyph_bitmap
