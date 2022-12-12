@@ -228,3 +228,13 @@ val make_glyph_bitmap: t -> buffer -> width:int -> height:int ->
 val get_glyph_bitmap_box: t -> glyph -> scale_x:float -> scale_y:float -> box
 
 val blur_glyph_bitmap: buffer -> width:int -> height:int -> box -> float -> unit
+
+type glyph_bitmap = {
+  buf : buffer;
+  w : int;
+  h : int;
+  xoff : int;
+  yoff : int;
+}
+
+val get_glyph_bitmap: t -> glyph -> scale_x:float -> scale_y:float -> glyph_bitmap

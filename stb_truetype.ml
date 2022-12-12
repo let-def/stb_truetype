@@ -136,6 +136,9 @@ let make_glyph_bitmap t buffer ~width ~height ~scale_x ~scale_y box glyph =
 external get_glyph_bitmap_box: t -> glyph -> scale_x:float -> scale_y:float -> box
   = "ml_stbtt_GetGlyphBitmapBox"
 
+external get_glyph_bitmap_box_subpixel: t -> glyph -> scale_x:float -> scale_y:float -> shift_x:float -> shift_y:float -> box
+  = "ml_stbtt_GetGlyphBitmapBoxSubpixel_bc" "ml_stbtt_GetGlyphBitmapBoxSubpixel"
+
 external blur_glyph_bitmap: buffer -> offset:int -> gw:int -> gh:int -> stride:int -> float -> unit
   = "ml_stbtt_BlurGlyphBitmap_bc" "ml_stbtt_BlurGlyphBitmap"
   [@@noalloc]
@@ -155,3 +158,17 @@ let blur_glyph_bitmap buffer ~width ~height box amount =
     ~gw:(box.x1-box.x0)
     ~gh:(box.y1-box.y0)
     amount
+
+type glyph_bitmap = {
+  buf : buffer;
+  w : int;
+  h : int;
+  xoff : int;
+  yoff : int;
+}
+
+external get_glyph_bitmap: t -> glyph -> scale_x:float -> scale_y:float -> glyph_bitmap
+  = "ml_stbtt_GetGlyphBitmap"
+
+external get_glyph_bitmap_subpixel: t -> glyph -> scale_x:float -> scale_y:float -> shift_x:float -> shift_y:float -> glyph_bitmap
+  = "ml_stbtt_GetGlyphBitmapSubpixel_bc" "ml_stbtt_GetGlyphBitmapSubpixel"
