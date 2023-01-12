@@ -12,6 +12,10 @@ $ make install
 
 ## CHANGELOG
 
+Version 0.7, Thu Jan 12 15:56:31 JST 2023
+  Use `Unix.mapfile` instead of `Bigarray.*.map_file`.
+  Add glyph manipulation primitives (contributed by @Armael).
+
 Version 0.6, Sun Jul  8 17:35:11 CEST 2018
   Some stubs were wrong with bytecode backend
 
