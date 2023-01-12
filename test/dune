@@ -1,0 +1,8 @@
+(executable
+ (name test_font)
+ (libraries stb_truetype unix))
+
+(rule
+ (alias runtest)
+ (deps test_font.exe)
+ (action (progn))) ; Just testing if it compiles

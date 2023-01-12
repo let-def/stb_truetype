@@ -1,16 +1,16 @@
 opam-version: "2.0"
+version: "0.7"
 maintainer: "Frederic Bour <frederic.bour@lakaban.net>"
 authors: "Frederic Bour <frederic.bour@lakaban.net>"
 homepage: "https://github.com/let-def/stb_truetype"
 bug-reports: "https://github.com/let-def/stb_truetype"
 license: "CC0-1.0+"
 dev-repo: "git+https://github.com/let-def/stb_truetype.git"
-build: [make]
-install: [make "install"]
-remove: ["ocamlfind" "remove" "stb_truetype"]
+build: ["dune" "build" "-p" name "-j" jobs]
+run-test: ["dune" "runtest" "-p" name "-j" jobs]
 depends: [
   "ocaml" {>= "4.06"}
-  "ocamlfind" {build}
+  "dune" {>= "2.0"}
 ]
 synopsis: "OCaml bindings to stb_truetype, a public domain font rasterizer"
 description: """
@@ -20,4 +20,3 @@ Stb_truetype is an OCaml binding to stb_truetype from Sean Barrett, [Nothings](h
 
 The OCaml binding is released under CC-0 license.  It has no dependency beside
 working OCaml and C compilers (stb_truetype is self-contained)."""
-flags: light-uninstall

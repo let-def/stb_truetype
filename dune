@@ -1,0 +1,7 @@
+(library
+ (public_name stb_truetype)
+ (foreign_stubs
+  (language c)
+  (flags :standard -O3 -ffast-math -Werror)
+  (names ml_stb_truetype))
+ (libraries bigarray))
